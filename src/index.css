@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 248 249 251;
+    --surface: 255 255 255;
+    --surface-2: 241 243 246;
+    --surface-3: 232 235 240;
+    --fg: 32 33 36;
+    --muted: 95 99 104;
+    --border: 218 220 224;
+    --primary: 26 115 232;
+    --primary-fg: 255 255 255;
+    --primary-soft: 232 240 254;
+    --accent: 249 171 0;
+    --danger: 217 48 37;
+    color-scheme: light;
+  }
+  .dark {
+    --bg: 17 18 20;
+    --surface: 30 31 34;
+    --surface-2: 40 42 46;
+    --surface-3: 52 54 59;
+    --fg: 232 234 237;
+    --muted: 160 165 172;
+    --border: 60 63 68;
+    --primary: 138 180 248;
+    --primary-fg: 16 32 64;
+    --primary-soft: 36 52 82;
+    --accent: 253 214 99;
+    --danger: 242 139 130;
+    color-scheme: dark;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg; }
+  ::selection { background: rgb(var(--primary) / 0.25); }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8; }
+  .card { @apply rounded-2xl border border-border/70 bg-surface shadow-card; }
+  .glass {
+    @apply border border-white/40 dark:border-white/10 shadow-float;
+    background: rgb(var(--surface) / 0.72);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+  }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
+  .section-title { @apply font-display text-xl font-bold sm:text-2xl; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
