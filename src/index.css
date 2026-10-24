@@ -1,0 +1,448 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================================
+   OmniCalendar design tokens
+   ---------------------------------------------------------------------
+   Surface tiers (back → front):
+     bg        page canvas
+     band      full-width section band, a half-step above the canvas
+     surface   cards, panels, inputs (raised)
+     surface-2 recessed wells and hover states inside cards
+     surface-3 strongest neutral fill (tracks, heat-map empty cells)
+   Light and dark are tuned separately — dark is a cool ink, not inverted grey.
+   ===================================================================== */
+@layer base {
+  :root {
+    --bg: 246 247 250;
+    --band: 239 242 248;
+    --surface: 255 255 255;
+    --surface-2: 242 244 248;
+    --surface-3: 229 233 241;
+    --fg: 23 27 38;
+    --muted: 86 94 110;
+    --border: 222 226 234;
+    --border-strong: 198 205 218;
+    --primary: 26 115 232;
+    --primary-fg: 255 255 255;
+    --primary-soft: 232 240 254;
+    --accent: 249 171 0;
+    --danger: 217 48 37;
+
+    /* Background light: soft washes used by the canvas and hero only. */
+    --glow-1: 26 115 232;
+    --glow-2: 124 92 246;
+    --glow-strength: 0.09;
+
+    /* Elevation — shadows are tinted with the ink colour, never pure black. */
+    --shadow-ink: 23 32 56;
+    --highlight: 255 255 255 / 0;
+    --shadow-card: 0 1px 2px rgb(var(--shadow-ink) / 0.04), 0 1px 3px rgb(var(--shadow-ink) / 0.05);
+    --shadow-control: 0 1px 2px rgb(var(--shadow-ink) / 0.06);
+    --shadow-lift: 0 10px 28px -10px rgb(var(--shadow-ink) / 0.16), 0 2px 6px rgb(var(--shadow-ink) / 0.05);
+    --shadow-float: 0 24px 56px -16px rgb(var(--shadow-ink) / 0.26), 0 4px 12px rgb(var(--shadow-ink) / 0.07);
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: 11 14 21;
+    --band: 15 19 28;
+    --surface: 22 27 38;
+    --surface-2: 30 36 50;
+    --surface-3: 42 49 67;
+    --fg: 231 234 241;
+    --muted: 154 163 182;
+    --border: 41 48 65;
+    --border-strong: 60 69 92;
+    --primary: 138 180 248;
+    --primary-fg: 10 24 52;
+    --primary-soft: 29 44 76;
+    --accent: 253 214 99;
+    --danger: 242 139 130;
+
+    --glow-1: 92 142 245;
+    --glow-2: 139 108 246;
+    --glow-strength: 0.16;
+
+    --shadow-ink: 0 0 0;
+    /* A faint top highlight gives dark cards an edge without heavy borders. */
+    --highlight: 255 255 255 / 0.045;
+    --shadow-card: inset 0 1px 0 rgb(var(--highlight)), 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-control: inset 0 1px 0 rgb(var(--highlight)), 0 1px 2px rgb(0 0 0 / 0.25);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 14px 32px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+    --shadow-float: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 28px 60px -16px rgb(0 0 0 / 0.7), 0 4px 14px rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+    /* One restrained wash at the very top of the canvas — content below sits on a calm, flat tone. */
+    background-image: radial-gradient(1100px 520px at 50% -220px, rgb(var(--glow-1) / var(--glow-strength)), transparent 72%);
+    background-repeat: no-repeat;
+  }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg; }
+  ::selection { background: rgb(var(--primary) / 0.25); }
+}
+
+@layer components {
+  /* ---------- Layout ---------- */
+  .container-page { @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8; }
+  .section { @apply py-12 sm:py-16; }
+  /* Full-width band: separates groups of content without boxing them in. */
+  .band { @apply border-y border-border/60 bg-band; }
+
+  /* Hero canvas: two soft light sources that fade into the page; nothing sits behind body copy. */
+  .hero-canvas { @apply relative isolate overflow-hidden; }
+  .hero-canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 75% at 50% 0%, rgb(var(--glow-1) / calc(var(--glow-strength) * 1.3)), transparent 70%),
+      radial-gradient(35% 50% at 82% 18%, rgb(var(--glow-2) / calc(var(--glow-strength) * 0.8)), transparent 70%),
+      radial-gradient(30% 45% at 15% 30%, rgb(var(--accent) / calc(var(--glow-strength) * 0.45)), transparent 70%);
+  }
+  .hero-canvas::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    z-index: -1;
+    background: linear-gradient(90deg, transparent, rgb(var(--border)), transparent);
+  }
+
+  /* Page header used on inner pages — a quieter sibling of the home hero. */
+  .page-hero { @apply relative isolate overflow-hidden border-b border-border/60; }
+  .page-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(70% 120% at 0% 0%, rgb(var(--glow-1) / calc(var(--glow-strength) * 0.9)), transparent 65%);
+  }
+
+  /* ---------- Typography ---------- */
+  .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.12em] text-primary; }
+  .page-title { @apply font-display text-3xl font-extrabold leading-tight sm:text-4xl; }
+  .section-title { @apply font-display text-xl font-bold sm:text-2xl; }
+  .lead { @apply text-base leading-relaxed text-muted sm:text-lg; }
+  .meta-label { @apply text-xs font-semibold uppercase tracking-wide text-muted; }
+
+  /* ---------- Surfaces ---------- */
+  .card { @apply rounded-2xl border border-border/80 bg-surface shadow-card; }
+  .card-interactive {
+    @apply transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lift;
+  }
+  /* Press: settle back down and compress very slightly — reads as a click, never a bounce. */
+  .card-interactive:active { transform: translateY(0) scale(0.992); transition-duration: 80ms; }
+  /* Recessed well inside a card or on the canvas. */
+  .well { @apply rounded-2xl border border-border/50 bg-surface-2/70; }
+  .glass {
+    @apply border border-white/50 shadow-float dark:border-white/10;
+    background: rgb(var(--surface) / 0.78);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+  }
+  /* Small calendar-binding tab at the top edge of a card, coloured by category. */
+  .card-tab { @apply pointer-events-none absolute left-5 top-0 h-1 w-10 rounded-b-full; }
+
+  /* ---------- Chips ---------- */
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
+  .chip-toggle {
+    @apply chip border border-border bg-surface py-1.5 text-fg shadow-control transition-colors hover:border-border-strong hover:bg-surface-2;
+  }
+  .chip-toggle[aria-pressed="true"] { @apply border-primary bg-primary text-primary-fg hover:bg-primary; }
+
+  /* ---------- Form fields ---------- */
+  .field {
+    @apply h-10 w-full rounded-xl border border-border bg-surface px-3.5 text-sm text-fg shadow-control outline-none transition-[border-color,box-shadow]
+      placeholder:text-muted/80 hover:border-border-strong focus:border-primary focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:ring-offset-0;
+  }
+  .field-pill { @apply rounded-full px-4; }
+  select.field {
+    @apply cursor-pointer appearance-none pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23565e6e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+  }
+  .dark select.field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa3b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+  .dark input[type="date"].field::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+
+  /* ---------- Segmented control (view toggles, tabs) ---------- */
+  .segmented { @apply inline-flex items-center gap-0.5 rounded-full border border-border/70 bg-surface-2 p-1; }
+  .segmented-item {
+    @apply inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium text-muted transition-all hover:text-fg focus-visible:ring-offset-0;
+  }
+  .segmented-item[aria-pressed="true"],
+  .segmented-item[aria-selected="true"] { @apply bg-surface text-fg shadow-card dark:bg-surface-3; }
+}
+
+/* =====================================================================
+   Motion
+   ---------------------------------------------------------------------
+   Rules: transform + opacity only; enter ≤ 260ms ease-out, exit ≤ 120ms ease-in;
+   nothing blocks input; the same motion runs in Light, Dark and Liquid Glass.
+   ===================================================================== */
+@layer components {
+  /* Small controls: chips, nav items, segmented items, icon buttons. */
+  .pressable { transition: transform 120ms cubic-bezier(.2,.7,.2,1), background-color 150ms, color 150ms, box-shadow 150ms; }
+  .pressable:active { transform: scale(0.96); transition-duration: 60ms; }
+  .chip-toggle { @apply pressable; }
+  .segmented-item:active { transform: scale(0.96); }
+
+  /* Data-state driven popovers (menus, dialogs): one place for enter/exit. */
+  .motion-menu[data-state="open"] { @apply animate-menu-in; }
+  .motion-menu[data-state="closed"] { @apply pointer-events-none animate-menu-out; }
+  .motion-scrim[data-state="open"] { @apply animate-fade-in; }
+  .motion-scrim[data-state="closed"] { @apply pointer-events-none animate-fade-out; }
+  .motion-dialog[data-state="open"] { @apply animate-sheet-in sm:animate-dialog-in; }
+  .motion-dialog[data-state="closed"] { @apply pointer-events-none animate-sheet-out sm:animate-dialog-out; }
+
+}
+
+/* Scroll reveal: hidden start state exists only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] { transition: opacity 320ms cubic-bezier(.2,.7,.2,1), transform 320ms cubic-bezier(.2,.7,.2,1); }
+  [data-reveal="pending"] { opacity: 0; transform: translateY(10px); }
+}
+@media print {
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+}
+
+/* Theme change: a short cross-fade via the View Transitions API (see AppContext).
+   Fallback for browsers without it: colours ease for 250ms while .theme-switching is set. */
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 220ms; animation-timing-function: cubic-bezier(.4,0,.2,1); }
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease, fill 250ms ease, box-shadow 250ms ease !important;
+}
+
+/* =====================================================================
+   Liquid Glass theme (opt-in: html.theme-glass, on top of light or dark)
+   ---------------------------------------------------------------------
+   One material, three intensities:
+     pane    every card/panel — translucent, no blur (cheap; content sits on a calm field)
+     raised  featured cards — pane + lens edge + light blur
+     chrome  header, tab bar, menus, dialogs, toasts — strongest frost, real backdrop blur
+   The ambient field behind everything is fixed and static, so blur has something
+   soft to refract while text always sits on a frosted layer, never on raw colour.
+   ===================================================================== */
+@layer base {
+  .theme-glass {
+    --bg: 232 237 247;
+    --band: 255 255 255;
+    --surface: 255 255 255;
+    --surface-2: 236 240 248;
+    --surface-3: 222 228 240;
+    --fg: 18 22 34;
+    --muted: 68 76 94;            /* darker than Light: muted text may sit on tinted glass */
+    --primary: 14 80 190;         /* deeper brand blue: links stay ≥4.5:1 even on the most tinted field */
+    --border: 200 208 224;
+    --border-strong: 176 186 206;
+
+    --surface-alpha: 0.62;
+    --surface-2-alpha: 0.55;
+    --surface-3-alpha: 0.7;
+    --band-alpha: 0.3;
+
+    --glass-edge: 255 255 255 / 0.78;      /* top/side rim of a pane */
+    --glass-edge-dim: 255 255 255 / 0.32;  /* lower rim */
+    --glass-sheen: 255 255 255 / 0.42;     /* soft top reflection */
+    --glass-chrome: 0.6;                   /* surface opacity for blurred chrome */
+    --glass-blur: 22px;
+    --glass-saturate: 170%;
+
+    --field-1: 98 146 255;   /* ambient field colours */
+    --field-2: 168 140 255;
+    --field-3: 96 206 214;
+    --field-4: 255 186 150;
+    --field-strength: 0.28;
+
+    --shadow-ink: 40 52 92;
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 1px 2px rgb(var(--shadow-ink) / 0.06), 0 6px 18px -10px rgb(var(--shadow-ink) / 0.18);
+    --shadow-control: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 1px 2px rgb(var(--shadow-ink) / 0.08);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.8), 0 14px 32px -12px rgb(var(--shadow-ink) / 0.26), 0 2px 6px rgb(var(--shadow-ink) / 0.06);
+    --shadow-float: inset 0 1px 0 rgb(255 255 255 / 0.85), 0 24px 56px -18px rgb(var(--shadow-ink) / 0.32), 0 4px 14px rgb(var(--shadow-ink) / 0.08);
+  }
+
+  .theme-glass.dark {
+    --bg: 9 12 22;
+    --band: 30 38 60;
+    --surface: 30 37 56;
+    --surface-2: 44 52 76;
+    --surface-3: 58 68 96;
+    --fg: 236 240 248;
+    --muted: 168 178 200;
+    --border: 66 76 104;
+    --border-strong: 92 104 136;
+    --primary: 138 180 248;
+    --primary-soft: 38 56 98;
+
+    --surface-alpha: 0.56;
+    --surface-2-alpha: 0.5;
+    --surface-3-alpha: 0.65;
+    --band-alpha: 0.28;
+
+    --glass-edge: 255 255 255 / 0.13;
+    --glass-edge-dim: 255 255 255 / 0.04;
+    --glass-sheen: 255 255 255 / 0.06;
+    --glass-chrome: 0.55;
+    --glass-saturate: 160%;
+
+    --field-1: 44 92 230;
+    --field-2: 120 70 220;
+    --field-3: 20 150 168;
+    --field-4: 196 92 120;
+    --field-strength: 0.32;
+
+    --shadow-ink: 0 0 0;
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 22px -12px rgb(0 0 0 / 0.55);
+    --shadow-control: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 16px 36px -12px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.3);
+    --shadow-float: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 28px 60px -16px rgb(0 0 0 / 0.75), 0 4px 14px rgb(0 0 0 / 0.35);
+  }
+
+  /* Ambient field: fixed, static, painted once. Replaces the default top wash. */
+  .theme-glass body { background-image: none; }
+  .theme-glass body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(48vmax 40vmax at 12% 8%, rgb(var(--field-1) / var(--field-strength)), transparent 70%),
+      radial-gradient(42vmax 36vmax at 88% 16%, rgb(var(--field-2) / var(--field-strength)), transparent 70%),
+      radial-gradient(46vmax 40vmax at 78% 92%, rgb(var(--field-3) / calc(var(--field-strength) * 0.85)), transparent 70%),
+      radial-gradient(40vmax 34vmax at 10% 84%, rgb(var(--field-4) / calc(var(--field-strength) * 0.75)), transparent 70%);
+  }
+
+  /* Native option lists can't render translucency — keep them solid and readable. */
+  .theme-glass option { background-color: rgb(var(--surface-solid, var(--bg))); color: rgb(var(--fg)); }
+  .theme-glass { --surface-solid: 250 251 254; }
+  .theme-glass.dark { --surface-solid: 24 30 46; }
+}
+
+@layer components {
+  /* ---- Pane: every card ---- */
+  .theme-glass .card {
+    border-color: rgb(var(--glass-edge));
+    border-bottom-color: rgb(var(--glass-edge-dim));
+    background-image: linear-gradient(180deg, rgb(var(--glass-sheen)), transparent 42%);
+  }
+  .theme-glass .card-interactive:hover { border-color: rgb(var(--glass-edge)); }
+  .theme-glass .well { border-color: rgb(var(--glass-edge-dim)); }
+  .theme-glass .band { border-color: rgb(var(--glass-edge-dim)); }
+
+  /* ---- Raised: featured / selected cards get a lens edge and light blur ---- */
+  .theme-glass .card-feature {
+    -webkit-backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+  }
+  .theme-glass .card-feature::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.12) 38%, rgb(255 255 255 / 0.05) 62%, rgb(255 255 255 / 0.45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  .theme-glass.dark .card-feature::after {
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.04) 40%, rgb(255 255 255 / 0.02) 65%, rgb(255 255 255 / 0.12));
+  }
+
+  /* ---- Chrome: one shared frosted material ---- */
+  .theme-glass .glass,
+  .theme-glass .app-bar-inner,
+  .theme-glass .dialog-panel {
+    background-color: rgb(var(--surface) / var(--glass-chrome));
+    background-image: linear-gradient(180deg, rgb(var(--glass-sheen)), transparent 55%);
+    border: 1px solid rgb(var(--glass-edge));
+    border-bottom-color: rgb(var(--glass-edge-dim));
+    box-shadow: var(--shadow-float);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .theme-glass .dialog-panel { background-color: rgb(var(--surface) / calc(var(--glass-chrome) + 0.2)); }
+
+  /* Header becomes a floating capsule; the sticky strip itself is clear. */
+  .theme-glass .app-bar {
+    border-color: transparent;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    padding-top: 0.625rem;
+  }
+  .theme-glass .app-bar-inner {
+    width: min(72rem, 100% - 1.25rem);
+    border-radius: 9999px;
+    box-shadow: var(--shadow-lift);
+  }
+
+  .theme-glass .dialog-scrim {
+    background: rgb(var(--bg) / 0.35);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .theme-glass.dark .dialog-scrim { background: rgb(0 0 0 / 0.45); }
+
+  /* Controls pick up the same rim so fields, toggles and chips read as one family. */
+  .theme-glass .field { border-color: rgb(var(--glass-edge)); }
+  .theme-glass .field:hover { border-color: rgb(var(--border-strong)); }
+  .theme-glass .field:focus { border-color: rgb(var(--primary)); }
+  .theme-glass .segmented { border-color: rgb(var(--glass-edge-dim)); }
+  .theme-glass .chip-toggle:not([aria-pressed="true"]) { border-color: rgb(var(--glass-edge)); }
+
+  /* Hero and page headers: the ambient field already supplies colour — keep their washes faint. */
+  .theme-glass .hero-canvas::before,
+  .theme-glass .page-hero::before { opacity: 0.35; }
+  .theme-glass .page-hero { border-color: rgb(var(--glass-edge-dim)); }
+}
+
+/* ---- Fallbacks ---------------------------------------------------------- */
+/* No backdrop-filter: frost can't be faked, so panes and chrome become near-opaque. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .theme-glass, .theme-glass.dark { --glass-chrome: 0.94; --surface-alpha: 0.88; --surface-2-alpha: 0.85; --band-alpha: 0.6; }
+  .theme-glass .dialog-scrim { background: rgb(0 0 0 / 0.4); }
+}
+/* User asked the OS for less transparency: keep the theme's shape and rims, drop the see-through. */
+@media (prefers-reduced-transparency: reduce) {
+  .theme-glass, .theme-glass.dark { --glass-chrome: 0.96; --surface-alpha: 0.92; --surface-2-alpha: 0.9; --band-alpha: 0.7; --field-strength: 0.16; }
+  .theme-glass .glass, .theme-glass .app-bar-inner, .theme-glass .dialog-panel, .theme-glass .card-feature {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+/* Small screens: lighter blur radius — same look, less GPU work while scrolling. */
+@media (max-width: 640px) {
+  .theme-glass, .theme-glass.dark { --glass-blur: 14px; }
+}
+
+/* Reduced motion: every animation resolves to its end state instantly; nothing moves.
+   Colour/state changes still happen, so feedback (selected day, saved heart, active filter) stays visible. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
