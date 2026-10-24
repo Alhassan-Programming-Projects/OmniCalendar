@@ -8,6 +8,8 @@ A modern, responsive web app for discovering the special days of the year: UN in
 
 **React · TypeScript · Vite · Tailwind CSS**
 
+You can visit the website from here: https://alhassan-programming-projects.github.io/OmniCalendar/
+
 </div>
 
 ---
