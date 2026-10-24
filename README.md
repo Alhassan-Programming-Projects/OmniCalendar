@@ -218,4 +218,4 @@ Special-day information is gathered from the [United Nations list of Internation
 
 ## License
 
-No license has been chosen yet. Add a `LICENSE` file (for example MIT) before sharing the code publicly.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
